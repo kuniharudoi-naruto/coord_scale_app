@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ざひょうじくで せいりしよう</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1E4A78; --navy-dark:#153A60; --navy-pale:#E7EEF6;
+    --page-bg:#F4F6F9; --card-bg:#FFFFFF; --card-border:#E2E8EE;
+    --ink:#22303F; --ink-soft:#5A6B7A;
+    --cream:#FFF6DE; --cream-border:#F0D686; --cream-text:#8A6A12;
+    --green-bg:#E9F6ED; --green-text:#1F7A43; --green-border:#BFE3C9;
+    --purple-bg:#F1ECFB; --purple-text:#6A3FA0; --purple-border:#DCD0F5;
+    --orange-bg:#FFF1E2; --orange-text:#C56A0A; --orange-border:#F6D9B5;
+    --blue-bg:#E8F1FC; --blue-text:#1565C0; --blue-border:#C9DFF7;
+    --radius-lg:20px; --radius-md:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page-bg);color:var(--ink);font-family:"Zen Kaku Gothic New",sans-serif;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.display{font-family:"Zen Maru Gothic",sans-serif;font-weight:900;margin:0;}
+  ruby rt{font-size:0.55em;color:inherit;opacity:.85;}
+  .app-shell{max-width:920px;margin:0 auto;padding-bottom:90px;}
+
+  .app-header{background:var(--navy);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .app-header .title-group{display:flex;align-items:center;gap:10px;}
+  .app-header .title-icon{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .app-header h1{font-size:18px;color:#fff;}
+  .header-right{display:flex;align-items:center;gap:14px;}
+  .progress-group{display:flex;align-items:center;gap:6px;font-size:12px;color:#EAF1FA;}
+  .progress-dots{display:flex;align-items:center;gap:4px;}
+  .p-dot{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;background:transparent;}
+  .p-dot.current{background:#fff;color:var(--navy);border-color:#fff;}
+  .p-dot.done{background:var(--green-text);border-color:var(--green-text);}
+  .p-dash{width:10px;height:2px;background:rgba(255,255,255,.4);}
+  .help-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .help-btn:hover{background:rgba(255,255,255,.28);}
+
+  .banner{background:var(--cream);border-bottom:2px solid var(--cream-border);padding:12px 18px;display:flex;align-items:center;gap:10px;font-weight:700;color:var(--cream-text);font-size:14px;line-height:1.6;}
+  .banner .bulb{flex-shrink:0;font-size:18px;}
+
+  .content{padding:20px 18px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fadeIn .3s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ---------- step1: coordinate plane ---------- */
+  .step-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-lg);padding:18px;}
+  .tray-label{font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:13px;color:var(--ink-soft);margin-bottom:8px;}
+  .add-card-row{display:flex;gap:8px;margin-bottom:14px;}
+  .add-card-row input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--card-border);font-family:inherit;font-size:13px;background:#FBFCFE;}
+  .add-card-row input:focus{outline:2px solid var(--navy);outline-offset:1px;}
+  .add-card-btn{padding:10px 16px;border-radius:10px;border:none;background:var(--green-text);color:#fff;font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+  .add-card-btn:hover{filter:brightness(1.08);}
+
+  .tray{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;min-height:44px;}
+  .chip{padding:9px 14px;border-radius:999px;border:2px solid var(--blue-border);background:var(--blue-bg);color:var(--blue-text);font-weight:700;font-size:13px;cursor:pointer;}
+  .chip:hover{filter:brightness(0.97);}
+  .chip.selected{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .chip.custom{border-color:var(--purple-border);background:var(--purple-bg);color:var(--purple-text);}
+  .chip.custom.selected{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  .plane-wrap{position:relative;width:100%;max-width:460px;margin:0 auto;}
+  .plane{position:relative;width:100%;aspect-ratio:1/1;background:
+      linear-gradient(to right, var(--card-border) 1px, transparent 1px) 0 0/ 20% 100%,
+      linear-gradient(to bottom, var(--card-border) 1px, transparent 1px) 0 0/ 100% 20%,
+      #FBFCFE;
+    border:2px solid var(--navy-pale);border-radius:10px;cursor:crosshair;touch-action:none;}
+  .axis-label{position:absolute;font-size:12px;font-weight:700;color:var(--ink-soft);pointer-events:none;}
+  .axis-x-left{left:6px;bottom:-26px;}
+  .axis-x-right{right:6px;bottom:-26px;}
+  .axis-x-title{left:50%;bottom:-44px;transform:translateX(-50%);color:var(--navy);}
+  .axis-y-bottom{left:-8px;bottom:4px;transform:rotate(-90deg) translateX(50%);transform-origin:left bottom;}
+  .axis-y-top{left:-8px;top:4px;transform:rotate(-90deg) translateX(-50%);transform-origin:left top;}
+  .axis-y-title{left:-56px;top:50%;transform:translateY(-50%) rotate(-90deg);color:var(--navy);white-space:nowrap;}
+  .placed-token{position:absolute;transform:translate(-50%,-50%);padding:6px 24px 6px 10px;border-radius:999px;background:var(--navy);color:#fff;font-size:11px;font-weight:700;white-space:nowrap;cursor:grab;box-shadow:0 2px 6px rgba(30,74,120,.3);touch-action:none;user-select:none;}
+  .placed-token.custom{background:var(--purple-text);}
+  .placed-token.dragging{cursor:grabbing;box-shadow:0 4px 12px rgba(30,74,120,.45);z-index:5;}
+  .token-remove{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:11px;line-height:16px;text-align:center;cursor:pointer;}
+  .token-remove:hover{background:rgba(255,255,255,.45);}
+
+  .plane-hint-text{text-align:center;font-size:12px;color:var(--ink-soft);margin-top:10px;}
+  .plane-footer{margin-top:50px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .reset-link{background:none;border:none;color:var(--ink-soft);font-size:12px;text-decoration:underline;cursor:pointer;}
+  .count-text{font-size:12px;color:var(--ink-soft);font-weight:700;}
+
+  /* ---------- extra/optional entry ---------- */
+  .extra-box{margin-top:26px;padding-top:20px;border-top:1px dashed var(--card-border);}
+  .extra-title{font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:10px;text-align:center;}
+  .extra-btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .extra-btn{padding:11px 18px;border-radius:999px;border:2px solid var(--purple-border);background:var(--purple-bg);color:var(--purple-text);font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:13px;cursor:pointer;}
+  .extra-btn:hover{filter:brightness(0.97);}
+
+  .sub-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .back-link{background:#fff;border:1px solid var(--card-border);color:var(--navy);font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:13px;padding:8px 14px;border-radius:999px;cursor:pointer;flex-shrink:0;}
+  .back-link:hover{background:var(--navy-pale);}
+  .sub-header h3{font-size:16px;color:var(--navy);}
+
+  /* ---------- image map ---------- */
+  .im-wrap{width:100%;max-width:420px;margin:10px auto 0;}
+  .im-wrap svg{width:100%;height:auto;}
+  .im-node{cursor:pointer;}
+  .im-node text{font-family:"Zen Kaku Gothic New", sans-serif;font-weight:700;pointer-events:none;}
+
+  /* ---------- venn diagram ---------- */
+  .venn-svg-wrap{width:100%;max-width:340px;margin:0 auto 16px;}
+  .venn-svg-wrap svg{width:100%;height:auto;}
+  .venn-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  @media (max-width:560px){.venn-cols{grid-template-columns:1fr;}}
+  .venn-col{background:#FBFCFE;border:1px solid var(--card-border);border-radius:var(--radius-md);padding:10px;}
+  .venn-col-label{font-size:12px;font-weight:700;margin-bottom:8px;text-align:center;padding:4px;border-radius:8px;}
+  .venn-col-label.blue{background:var(--blue-bg);color:var(--blue-text);}
+  .venn-col-label.purple{background:var(--purple-bg);color:var(--purple-text);}
+  .venn-col-label.orange{background:var(--orange-bg);color:var(--orange-text);}
+  .add-card-btn.small{padding:9px 12px;}
+  .venn-col .tray{min-height:24px;}
+  .venn-col .chip{font-size:11px;padding:6px 10px;}
+
+  /* ---------- step2: scale charts ---------- */
+  .edit-panel{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--radius-md);padding:16px;margin-bottom:18px;}
+  .edit-panel .title-field{margin-bottom:12px;}
+  .edit-panel label{display:block;font-size:12px;font-weight:700;color:var(--blue-text);margin-bottom:4px;}
+  .edit-panel input[type=text]{width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--blue-border);font-family:inherit;font-size:13px;}
+  .value-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+  .value-grid div{text-align:center;}
+  .value-grid label{font-size:11px;}
+  .value-grid input[type=number]{width:100%;padding:8px 4px;border-radius:8px;border:1px solid var(--blue-border);text-align:center;font-size:13px;}
+
+  .chart-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+  .chart-col{flex:1;min-width:200px;max-width:260px;text-align:center;}
+  .chart-col canvas{width:100%;background:#fff;border:1px solid var(--card-border);border-radius:10px;}
+  .chart-col .cap{font-size:13px;font-weight:700;color:var(--ink-soft);margin-top:8px;}
+
+  .slider-block{max-width:260px;margin:14px auto 0;text-align:center;}
+  .slider-block label{display:block;font-size:12px;font-weight:700;color:var(--orange-text);margin-bottom:6px;}
+  .slider-block input[type=range]{width:100%;}
+
+  .notice-box{margin-top:18px;background:var(--orange-bg);border:1px solid var(--orange-border);color:var(--orange-text);border-radius:var(--radius-md);padding:14px 16px;font-size:13px;line-height:1.7;}
+  .reveal-btn{margin-top:14px;background:#fff;border:2px solid var(--orange-border);color:var(--orange-text);font-family:"Zen Maru Gothic",sans-serif;font-weight:700;padding:10px 18px;border-radius:999px;cursor:pointer;font-size:13px;}
+  .reveal-btn:hover{background:var(--orange-bg);}
+  .bonus-box{display:none;margin-top:14px;}
+  .bonus-box.show{display:block;}
+
+  /* ---------- step3: reflection ---------- */
+  .panel{border-radius:var(--radius-md);padding:16px 18px;margin-bottom:16px;border:1px solid;}
+  .panel:last-of-type{margin-bottom:0;}
+  .panel.green{background:var(--green-bg);border-color:var(--green-border);}
+  .panel.purple{background:var(--purple-bg);border-color:var(--purple-border);}
+  .panel.orange{background:var(--orange-bg);border-color:var(--orange-border);}
+  .panel label{display:block;font-weight:700;font-size:14px;margin-bottom:6px;}
+  .panel.green label{color:var(--green-text);}
+  .panel.purple label{color:var(--purple-text);}
+  .panel.orange label{color:var(--orange-text);}
+  .panel .p-hint{font-size:12px;color:var(--ink-soft);margin-bottom:8px;line-height:1.6;}
+  .panel textarea{width:100%;min-height:64px;border-radius:10px;border:1px solid var(--card-border);padding:10px;font-family:"Zen Kaku Gothic New",sans-serif;font-size:14px;line-height:1.7;color:var(--ink);resize:vertical;background:#fff;}
+  .panel textarea:focus{outline:2px solid var(--navy);outline-offset:1px;}
+  .error-msg{font-size:13px;color:#C0392B;margin-top:4px;display:none;}
+  .error-msg.show{display:block;}
+
+  .complete-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-lg);padding:36px 24px;text-align:center;}
+  .complete-card .big-check{width:64px;height:64px;border-radius:50%;background:var(--green-bg);color:var(--green-text);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;}
+
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--card-border);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:920px;margin:0 auto;}
+  .nav-btn{padding:12px 20px;border-radius:999px;font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;}
+  .nav-hint{background:#fff;border:2px solid var(--card-border);color:var(--ink-soft);width:44px;height:44px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;font-size:15px;}
+  .nav-hint:hover{background:var(--navy-pale);}
+  .nav-back{background:#fff;border:2px solid var(--card-border);color:var(--navy);}
+  .nav-back:hover{background:var(--navy-pale);}
+  .nav-back:disabled{opacity:.35;cursor:default;}
+  .nav-next{background:var(--navy);color:#fff;}
+  .nav-next:hover{background:var(--navy-dark);}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(20,30,40,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{background:#fff;border-radius:var(--radius-lg);padding:24px;max-width:360px;width:100%;}
+  .modal-box h3{color:var(--navy);font-size:16px;margin-bottom:10px;}
+  .modal-box p{font-size:14px;color:var(--ink-soft);line-height:1.8;margin:0 0 16px;}
+  .modal-close{width:100%;padding:12px;border-radius:999px;border:none;background:var(--navy);color:#fff;font-family:"Zen Maru Gothic",sans-serif;font-weight:700;font-size:14px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="app-header">
+    <div class="title-group">
+      <div class="title-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 20 L4 4 M4 20 L20 20" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="9" cy="15" r="2" fill="#fff"/><circle cx="15" cy="9" r="2" fill="#fff"/><circle cx="17" cy="16" r="2" fill="#fff"/></svg>
+      </div>
+      <h1><ruby>座標軸<rt>ざひょうじく</rt></ruby>で<ruby>整理<rt>せいり</rt></ruby>しよう</h1>
+    </div>
+    <div class="header-right">
+      <div class="progress-group">
+        すすみぐあい
+        <div class="progress-dots" id="progress-dots"></div>
+      </div>
+      <button class="help-btn" id="help-btn" aria-label="使い方">?</button>
+    </div>
+  </div>
+
+  <div class="banner" id="banner-text"></div>
+
+  <div class="content">
+
+    <!-- ============ STEP 1: coordinate plane ============ -->
+    <section id="view-step1" class="view active">
+      <div class="step-card">
+        <div class="tray-label">気づいたことをカードにして、じくの上に置いてみよう</div>
+        <div class="add-card-row">
+          <input type="text" id="new-card-input" maxlength="24" placeholder="新しいカードの言葉を入力(例:動画も見られる)">
+          <button class="add-card-btn" id="add-card-btn">＋ 追加</button>
+        </div>
+        <div class="tray" id="card-tray"></div>
+
+        <div class="plane-wrap">
+          <div class="plane" id="plane">
+            <span class="axis-label axis-x-left">低い</span>
+            <span class="axis-label axis-x-right">高い</span>
+            <span class="axis-label axis-x-title">べんりさ →</span>
+            <span class="axis-label axis-y-bottom">少ない</span>
+            <span class="axis-label axis-y-top">多い</span>
+            <span class="axis-label axis-y-title">気をつけたいこと →</span>
+          </div>
+        </div>
+        <div class="plane-hint-text">置いたカードは、そのままドラッグして動かせるよ。右の「×」で外せるよ。</div>
+        <div class="plane-footer">
+          <span class="count-text" id="placed-count">0 / 8 個 配置ずみ</span>
+          <button class="reset-link" id="reset-plane-btn">はいちをやりなおす</button>
+        </div>
+
+        <div class="extra-box">
+          <div class="extra-title">発展:こんな整理のしかたもためしてみよう(やってみたい人だけ)</div>
+          <div class="extra-btn-row">
+            <button class="extra-btn" id="open-imagemap-btn">🗺️ イメージマップを作ってみる</button>
+            <button class="extra-btn" id="open-venn-btn">⭕ ベン図を作ってみる</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ EXTRA: image map ============ -->
+    <section id="view-imagemap" class="view">
+      <div class="step-card">
+        <div class="sub-header">
+          <button class="back-link" data-backto="step1">← もどる</button>
+          <h3>イメージマップを作ってみよう</h3>
+        </div>
+        <div class="add-card-row">
+          <input type="text" id="im-center-input" maxlength="16" placeholder="まん中のテーマを入力(例:SNS)">
+        </div>
+        <div class="add-card-row">
+          <input type="text" id="im-branch-input" maxlength="16" placeholder="思いついたことを入力(例:べんり)">
+          <button class="add-card-btn" id="im-add-btn">＋ 追加</button>
+        </div>
+        <div class="im-wrap">
+          <svg id="im-svg" viewBox="0 0 400 400"></svg>
+        </div>
+        <p class="plane-hint-text">まん中から、思いついたことをどんどん追加してみよう。カードをタップすると消せるよ。</p>
+      </div>
+    </section>
+
+    <!-- ============ EXTRA: venn diagram ============ -->
+    <section id="view-venn" class="view">
+      <div class="step-card">
+        <div class="sub-header">
+          <button class="back-link" data-backto="step1">← もどる</button>
+          <h3>ベン図を作ってみよう</h3>
+        </div>
+        <div class="value-grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px;">
+          <div><label>左の円のテーマ</label><input type="text" id="venn-left-theme" placeholder="例:べんりなこと"></div>
+          <div><label>右の円のテーマ</label><input type="text" id="venn-right-theme" placeholder="例:気をつけたいこと"></div>
+        </div>
+        <div class="venn-svg-wrap">
+          <svg viewBox="0 0 320 200">
+            <circle cx="130" cy="100" r="90" fill="rgba(47,127,166,0.15)" stroke="#2F7FA6" stroke-width="2"/>
+            <circle cx="190" cy="100" r="90" fill="rgba(196,90,10,0.12)" stroke="#C56A0A" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="venn-cols">
+          <div class="venn-col">
+            <div class="venn-col-label blue" id="venn-label-left">左だけ</div>
+            <div class="add-card-row"><input type="text" id="venn-left-input" maxlength="16" placeholder="入力"><button class="add-card-btn small" id="venn-left-add">＋</button></div>
+            <div class="tray" id="venn-left-list"></div>
+          </div>
+          <div class="venn-col">
+            <div class="venn-col-label purple">両方</div>
+            <div class="add-card-row"><input type="text" id="venn-both-input" maxlength="16" placeholder="入力"><button class="add-card-btn small" id="venn-both-add">＋</button></div>
+            <div class="tray" id="venn-both-list"></div>
+          </div>
+          <div class="venn-col">
+            <div class="venn-col-label orange" id="venn-label-right">右だけ</div>
+            <div class="add-card-row"><input type="text" id="venn-right-input" maxlength="16" placeholder="入力"><button class="add-card-btn small" id="venn-right-add">＋</button></div>
+            <div class="tray" id="venn-right-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP 2: scale comparison ============ -->
+    <section id="view-step2" class="view">
+      <div class="step-card">
+        <div class="edit-panel">
+          <div class="title-field">
+            <label>グラフの題名</label>
+            <input type="text" id="chart-title-input" value="スクリーンタイム(分)">
+          </div>
+          <label>5日分の数字を、自由に変えてみよう</label>
+          <div class="value-grid">
+            <div><label>月</label><input type="number" id="val-0" value="90" min="0" max="300"></div>
+            <div><label>火</label><input type="number" id="val-1" value="85" min="0" max="300"></div>
+            <div><label>水</label><input type="number" id="val-2" value="95" min="0" max="300"></div>
+            <div><label>木</label><input type="number" id="val-3" value="80" min="0" max="300"></div>
+            <div><label>金</label><input type="number" id="val-4" value="100" min="0" max="300"></div>
+          </div>
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-col"><canvas id="chart-zero" width="240" height="240"></canvas><div class="cap">0から始まるグラフ(きじゅん)</div></div>
+          <div class="chart-col"><canvas id="chart-scaled" width="240" height="240"></canvas><div class="cap">じくの始まりを変えたグラフ</div></div>
+        </div>
+        <div class="slider-block">
+          <label id="slider-label">じくの始まり:70</label>
+          <input type="range" id="scale-slider" min="0" max="70" value="70">
+        </div>
+        <div class="notice-box">スライダーを動かして、じくの始まりを変えてみよう。同じ数字なのに、見た目のちがいがどう変わるかな?</div>
+        <button class="reveal-btn" id="reveal-bonus-btn">ちなみに:土日を入れると?</button>
+        <div class="bonus-box" id="bonus-box">
+          <div class="chart-row" style="margin-top:14px;">
+            <div class="chart-col"><canvas id="chart-weekday" width="240" height="220"></canvas><div class="cap">平日だけの平均</div></div>
+            <div class="chart-col"><canvas id="chart-week" width="240" height="220"></canvas><div class="cap">土日を入れた平均(土180・日170と仮定)</div></div>
+          </div>
+          <div class="notice-box" style="margin-top:14px;">土日はスクリーンタイムが伸びやすいから、平日だけで見ると少なく見えてしまうことがあるんだね。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP 3: reflection ============ -->
+    <section id="view-step3" class="view">
+      <div class="panel green">
+        <label>① 整理してみて気づいたこと</label>
+        <div class="p-hint">例:「バラバラだったカードが、座標軸に置いてみると、かたまりになっているところがあった」</div>
+        <textarea id="r1" placeholder="情報を整理してみて、気づいたことを書こう"></textarea>
+      </div>
+      <div class="panel purple">
+        <label>② 座標軸で分かったこと</label>
+        <div class="p-hint">例:「べんりさが高くて、気をつけたいことも多いカードが、右上に集まっていた」</div>
+        <textarea id="r2" placeholder="座標軸に置いてみて、分かったことを書こう"></textarea>
+      </div>
+      <div class="panel orange">
+        <label>③ グラフで気をつけたいこと</label>
+        <div class="p-hint">例:「グラフの軸の始まりを変えたら、見た目の印象がずいぶん変わった。これから気をつけて見たい」</div>
+        <textarea id="r3" placeholder="グラフのスケールの活動で気づいた、気をつけたいことを書こう"></textarea>
+      </div>
+      <div class="error-msg" id="r-error">3つとも書いてから、保存しましょう。</div>
+    </section>
+
+    <!-- ============ COMPLETE ============ -->
+    <section id="view-complete" class="view">
+      <div class="complete-card">
+        <div class="big-check">✓</div>
+        <h2 style="font-size:18px;margin-bottom:10px;">きろくできました</h2>
+        <p style="color:var(--ink-soft);font-size:14px;line-height:1.8;">今日の学習はここまでです。動画4を見て、学びをたしかめよう。</p>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="bottom-nav" id="bottom-nav">
+  <button class="nav-btn nav-hint" id="hint-btn-bottom">?</button>
+  <button class="nav-btn nav-back" id="back-btn">← 一つ前へ</button>
+  <button class="nav-btn nav-next" id="next-btn">つぎへ →</button>
+</div>
+
+<div class="modal-overlay" id="hint-modal">
+  <div class="modal-box">
+    <h3 id="hint-title">ヒント</h3>
+    <p id="hint-body"></p>
+    <button class="modal-close" id="hint-close-btn">とじる</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "coord_scale_app_state_v2";
+function loadState(){
+  const def = {
+    placed:{}, customCards:[], reflection:{r1:"",r2:"",r3:""},
+    imageMap:{center:"", branches:[]},
+    venn:{leftTheme:"", rightTheme:"", onlyLeft:[], both:[], onlyRight:[]}
+  };
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return def;
+    return Object.assign(def, JSON.parse(raw));
+  }catch(e){ return def; }
+}
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+let state = loadState();
+
+/* ---------------- wizard navigation ---------------- */
+const STEPS = ["step1","step2","step3"];
+const BANNERS = {
+  step1: "🌟 気づいたことをカードにして、2つのじく(横:べんりさ ×縦:気をつけたいこと)の上に置いてみよう",
+  step2: "🌟 数字やじくの始まりを変えて、グラフの見え方がどう変わるか確かめよう",
+  step3: "🌟 今日の学習で気づいたことを、3つのシートに書いてまとめよう"
+};
+const HINTS = {
+  step1: "下の入力らんから、自分の言葉でカードを追加できるよ。カードをタップして選んでから、じくの中をタップすると置けるよ。置いたカードは、指でつまんで動かせるよ。",
+  step2: "数字や題名を書きかえると、グラフがすぐに変わるよ。スライダーで、じくの始まりも自由に変えてみよう。",
+  step3: "3つとも、書けるところから書いてみよう。短い文でも大丈夫だよ。"
+};
+let currentStepIndex = 0;
+
+function renderProgress(){
+  const wrap = document.getElementById("progress-dots");
+  wrap.innerHTML = "";
+  STEPS.forEach((s,i)=>{
+    const dot = document.createElement("div");
+    dot.className = "p-dot" + (i===currentStepIndex ? " current" : (i<currentStepIndex ? " done" : ""));
+    dot.textContent = i<currentStepIndex ? "\u2713" : (i+1);
+    wrap.appendChild(dot);
+    if(i < STEPS.length-1){
+      const dash = document.createElement("div");
+      dash.className = "p-dash";
+      wrap.appendChild(dash);
+    }
+  });
+}
+function showStep(index){
+  currentStepIndex = index;
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  const stepId = STEPS[index];
+  document.getElementById("view-"+stepId).classList.add("active");
+  document.getElementById("banner-text").innerHTML = '<span class="bulb">💡</span>' + BANNERS[stepId];
+  document.getElementById("banner-text").style.display = "flex";
+  document.getElementById("bottom-nav").style.display = "flex";
+  document.getElementById("back-btn").disabled = (index===0);
+  document.getElementById("next-btn").textContent = (index===STEPS.length-1) ? "きろくして おわる →" : "つぎへ →";
+  renderProgress();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+function showComplete(){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById("view-complete").classList.add("active");
+  document.getElementById("banner-text").style.display = "none";
+  document.getElementById("bottom-nav").style.display = "none";
+}
+document.getElementById("back-btn").addEventListener("click", ()=>{ if(currentStepIndex>0) showStep(currentStepIndex-1); });
+document.getElementById("next-btn").addEventListener("click", ()=>{
+  if(currentStepIndex < STEPS.length-1){
+    showStep(currentStepIndex+1);
+  } else {
+    const fields = [document.getElementById("r1"), document.getElementById("r2"), document.getElementById("r3")];
+    const allFilled = fields.every(f=>f.value.trim().length>0);
+    if(!allFilled){ document.getElementById("r-error").classList.add("show"); return; }
+    document.getElementById("r-error").classList.remove("show");
+    state.reflection = {r1:fields[0].value, r2:fields[1].value, r3:fields[2].value};
+    saveState();
+    showComplete();
+  }
+});
+function openHint(){
+  const stepId = STEPS[currentStepIndex] || "step1";
+  document.getElementById("hint-body").textContent = HINTS[stepId] || "";
+  document.getElementById("hint-modal").classList.add("show");
+}
+document.getElementById("help-btn").addEventListener("click", openHint);
+document.getElementById("hint-btn-bottom").addEventListener("click", openHint);
+document.getElementById("hint-close-btn").addEventListener("click", ()=>{ document.getElementById("hint-modal").classList.remove("show"); });
+
+/* ---------------- STEP1: coordinate plane ---------------- */
+const FIXED_CARDS = [
+  {id:"c1", text:"はなれた人と連絡できる"},
+  {id:"c2", text:"情報がすぐに広がる"},
+  {id:"c3", text:"学習でも使われている"},
+  {id:"c4", text:"知らない人とつながることがある"},
+  {id:"c5", text:"個人のことを書きすぎると危ない"},
+  {id:"c6", text:"写真や動画もすぐ送れる"},
+  {id:"c7", text:"使いすぎることがある"},
+  {id:"c8", text:"ルールを知らないとトラブルになる"}
+];
+function allCards(){ return FIXED_CARDS.concat(state.customCards); }
+
+const tray = document.getElementById("card-tray");
+const plane = document.getElementById("plane");
+let selectedCardId = null;
+
+function renderTray(){
+  tray.innerHTML = "";
+  allCards().forEach(c=>{
+    if(state.placed[c.id]) return;
+    const isCustom = c.id.indexOf("custom_")===0;
+    const chip = document.createElement("button");
+    chip.className = "chip" + (isCustom ? " custom" : "") + (selectedCardId===c.id ? " selected" : "");
+    chip.textContent = c.text;
+    chip.addEventListener("click", ()=>{
+      selectedCardId = (selectedCardId===c.id) ? null : c.id;
+      renderTray();
+    });
+    tray.appendChild(chip);
+  });
+  updateCount();
+}
+function makeTokenDraggable(token, id){
+  let dragging=false, startX=0, startY=0, startLeftPct=0, startTopPct=0;
+  token.addEventListener("pointerdown", (e)=>{
+    if(e.target.classList.contains("token-remove")) return;
+    e.stopPropagation();
+    dragging = true;
+    token.classList.add("dragging");
+    token.setPointerCapture(e.pointerId);
+    startX = e.clientX; startY = e.clientY;
+    const pos = state.placed[id];
+    startLeftPct = pos.x; startTopPct = pos.y;
+  });
+  token.addEventListener("pointermove", (e)=>{
+    if(!dragging) return;
+    const r = plane.getBoundingClientRect();
+    const dxPct = ((e.clientX - startX)/r.width)*100;
+    const dyPct = ((e.clientY - startY)/r.height)*100;
+    const nx = Math.max(2, Math.min(98, startLeftPct+dxPct));
+    const ny = Math.max(2, Math.min(98, startTopPct+dyPct));
+    token.style.left = nx+"%"; token.style.top = ny+"%";
+    state.placed[id] = {x:nx, y:ny};
+  });
+  function endDrag(e){
+    if(!dragging) return;
+    dragging = false;
+    token.classList.remove("dragging");
+    saveState();
+  }
+  token.addEventListener("pointerup", endDrag);
+  token.addEventListener("pointercancel", endDrag);
+}
+function renderPlacedTokens(){
+  plane.querySelectorAll(".placed-token").forEach(el=>el.remove());
+  Object.keys(state.placed).forEach(id=>{
+    const card = allCards().find(c=>c.id===id);
+    if(!card) return;
+    const isCustom = id.indexOf("custom_")===0;
+    const pos = state.placed[id];
+    const token = document.createElement("div");
+    token.className = "placed-token" + (isCustom ? " custom" : "");
+    token.style.left = pos.x+"%";
+    token.style.top = pos.y+"%";
+    token.innerHTML = card.text + '<span class="token-remove" data-id="'+id+'">×</span>';
+    plane.appendChild(token);
+    makeTokenDraggable(token, id);
+    token.querySelector(".token-remove").addEventListener("click",(e)=>{
+      e.stopPropagation();
+      delete state.placed[id];
+      saveState();
+      renderTray();
+      renderPlacedTokens();
+    });
+  });
+  updateCount();
+}
+function updateCount(){
+  const n = Object.keys(state.placed).length;
+  document.getElementById("placed-count").textContent = n + " / " + allCards().length + " 個 配置ずみ";
+}
+plane.addEventListener("click", (e)=>{
+  if(e.target.closest(".placed-token")) return;
+  if(!selectedCardId) return;
+  const r = plane.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width) * 100;
+  const y = ((e.clientY - r.top) / r.height) * 100;
+  state.placed[selectedCardId] = {x: Math.max(2,Math.min(98,x)), y: Math.max(2,Math.min(98,y))};
+  saveState();
+  selectedCardId = null;
+  renderTray();
+  renderPlacedTokens();
+});
+document.getElementById("reset-plane-btn").addEventListener("click", ()=>{
+  state.placed = {};
+  saveState();
+  selectedCardId = null;
+  renderTray();
+  renderPlacedTokens();
+});
+document.getElementById("add-card-btn").addEventListener("click", ()=>{
+  const input = document.getElementById("new-card-input");
+  const text = input.value.trim();
+  if(text.length===0) return;
+  const id = "custom_" + Date.now();
+  state.customCards.push({id, text});
+  saveState();
+  input.value = "";
+  renderTray();
+});
+document.getElementById("new-card-input").addEventListener("keydown", (e)=>{
+  if(e.key === "Enter") document.getElementById("add-card-btn").click();
+});
+
+/* ---------------- STEP2: charts ---------------- */
+function drawBarChart(canvasId, values, labels, yMin, yMax, color, title){
+  const cv = document.getElementById(canvasId);
+  const ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  const padL=32, padB=30, padT=title?28:14, padR=10;
+  const chartW = W-padL-padR, chartH = H-padT-padB;
+  if(title){
+    ctx.fillStyle="#22303F"; ctx.font="700 11px 'Zen Kaku Gothic New', sans-serif"; ctx.textAlign="center";
+    ctx.fillText(title, W/2, 16);
+  }
+  const barGap = chartW/values.length;
+  const barW = barGap*0.55;
+  ctx.strokeStyle="#DCE7EE"; ctx.lineWidth=1;
+  for(let g=0; g<=4; g++){
+    const gy = padT + chartH - (chartH*g/4);
+    ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(W-padR,gy); ctx.stroke();
+  }
+  values.forEach((v,i)=>{
+    const ratio = (yMax>yMin) ? (v-yMin)/(yMax-yMin) : 0;
+    const barH = Math.max(0, ratio*chartH);
+    const x = padL + barGap*i + (barGap-barW)/2;
+    const y = padT + chartH - barH;
+    ctx.fillStyle = color;
+    ctx.fillRect(x,y,barW,barH);
+    ctx.fillStyle = "#22303F";
+    ctx.font = "700 10px 'Zen Kaku Gothic New', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(labels[i], x+barW/2, H-padB+14);
+  });
+  ctx.fillStyle="#5A6B7A"; ctx.font="10px 'Zen Kaku Gothic New', sans-serif"; ctx.textAlign="right";
+  ctx.fillText(yMin, padL-4, padT+chartH+3);
+  ctx.fillText(yMax, padL-4, padT+8);
+  ctx.strokeStyle="#B9C6D1"; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+chartH); ctx.lineTo(W-padR,padT+chartH); ctx.stroke();
+}
+const dayLabels = ["月","火","水","木","金"];
+function getValues(){
+  return [0,1,2,3,4].map(i=>{
+    const v = parseInt(document.getElementById("val-"+i).value,10);
+    return isNaN(v) ? 0 : Math.max(0,v);
+  });
+}
+function redrawCharts(){
+  const values = getValues();
+  const title = document.getElementById("chart-title-input").value || "";
+  const maxVal = Math.max(...values, 10);
+  const yTop = Math.ceil((maxVal+15)/10)*10;
+  const slider = document.getElementById("scale-slider");
+  const minValue = Math.min(...values);
+  const sliderMax = Math.max(0, minValue-1);
+  slider.max = sliderMax;
+  if(parseInt(slider.value,10) > sliderMax) slider.value = sliderMax;
+  document.getElementById("slider-label").textContent = "じくの始まり:" + slider.value;
+
+  drawBarChart("chart-zero", values, dayLabels, 0, yTop, "#2F7FA6", title);
+  drawBarChart("chart-scaled", values, dayLabels, parseInt(slider.value,10), yTop, "#2F7FA6", title);
+
+  if(document.getElementById("bonus-box").classList.contains("show")) redrawBonus(values);
+}
+function redrawBonus(values){
+  const weekdayAvg = Math.round(values.reduce((a,b)=>a+b,0)/values.length);
+  const weekAvg = Math.round((values.reduce((a,b)=>a+b,0)+180+170)/7);
+  const top = Math.ceil((Math.max(weekdayAvg,weekAvg)+30)/20)*20;
+  drawBarChart("chart-weekday", [weekdayAvg], ["平日平均"], 0, top, "#F2984E");
+  drawBarChart("chart-week", [weekAvg], ["1週間平均"], 0, top, "#F2984E");
+}
+["val-0","val-1","val-2","val-3","val-4","chart-title-input"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", redrawCharts);
+});
+document.getElementById("scale-slider").addEventListener("input", redrawCharts);
+document.getElementById("reveal-bonus-btn").addEventListener("click", ()=>{
+  const box = document.getElementById("bonus-box");
+  box.classList.toggle("show");
+  if(box.classList.contains("show")) redrawBonus(getValues());
+});
+
+/* ---------------- STEP3: reflection ---------------- */
+function restoreReflection(){
+  document.getElementById("r1").value = state.reflection.r1 || "";
+  document.getElementById("r2").value = state.reflection.r2 || "";
+  document.getElementById("r3").value = state.reflection.r3 || "";
+}
+["r1","r2","r3"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", ()=>{
+    const fields = [document.getElementById("r1"), document.getElementById("r2"), document.getElementById("r3")];
+    if(fields.every(f=>f.value.trim().length>0)) document.getElementById("r-error").classList.remove("show");
+  });
+});
+
+/* ---------------- EXTRA: navigation (outside the 3-step wizard) ---------------- */
+function openExtra(viewId){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById(viewId).classList.add("active");
+  document.getElementById("banner-text").style.display = "none";
+  document.getElementById("bottom-nav").style.display = "none";
+  window.scrollTo({top:0, behavior:"instant"});
+}
+document.getElementById("open-imagemap-btn").addEventListener("click", ()=>{
+  openExtra("view-imagemap");
+  renderImageMap();
+});
+document.getElementById("open-venn-btn").addEventListener("click", ()=>{
+  openExtra("view-venn");
+  renderVenn();
+});
+document.querySelectorAll(".back-link").forEach(btn=>{
+  btn.addEventListener("click", ()=> showStep(0));
+});
+
+/* ---------------- EXTRA: image map ---------------- */
+const imCenterInput = document.getElementById("im-center-input");
+const imBranchInput = document.getElementById("im-branch-input");
+imCenterInput.addEventListener("input", ()=>{
+  state.imageMap.center = imCenterInput.value;
+  saveState();
+  renderImageMap();
+});
+document.getElementById("im-add-btn").addEventListener("click", addImBranch);
+imBranchInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter") addImBranch(); });
+function addImBranch(){
+  const text = imBranchInput.value.trim();
+  if(text.length===0) return;
+  state.imageMap.branches.push({id:"b"+Date.now(), text});
+  saveState();
+  imBranchInput.value = "";
+  renderImageMap();
+}
+function removeImBranch(id){
+  state.imageMap.branches = state.imageMap.branches.filter(b=>b.id!==id);
+  saveState();
+  renderImageMap();
+}
+const COLORS_CYCLE = ["#2F7FA6","#C56A0A","#1F7A43","#6A3FA0","#D4537E","#0F6E56"];
+function renderImageMap(){
+  imCenterInput.value = state.imageMap.center;
+  const svg = document.getElementById("im-svg");
+  svg.innerHTML = "";
+  const cx=200, cy=200, r=140;
+  const branches = state.imageMap.branches;
+  const centerText = state.imageMap.center.trim() || "テーマ";
+  branches.forEach((b,i)=>{
+    const angle = (i/(Math.max(branches.length,1))) * Math.PI*2 - Math.PI/2;
+    const bx = cx + r*Math.cos(angle);
+    const by = cy + r*Math.sin(angle);
+    const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute("x1",cx); line.setAttribute("y1",cy);
+    line.setAttribute("x2",bx); line.setAttribute("y2",by);
+    line.setAttribute("stroke", COLORS_CYCLE[i%COLORS_CYCLE.length]);
+    line.setAttribute("stroke-width","2");
+    svg.appendChild(line);
+
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("class","im-node");
+    g.addEventListener("click", ()=> removeImBranch(b.id));
+    const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    const w = Math.max(60, b.text.length*13+20);
+    rect.setAttribute("x", bx-w/2); rect.setAttribute("y", by-16);
+    rect.setAttribute("width", w); rect.setAttribute("height", 32);
+    rect.setAttribute("rx", 16);
+    rect.setAttribute("fill", COLORS_CYCLE[i%COLORS_CYCLE.length]);
+    g.appendChild(rect);
+    const text = document.createElementNS("http://www.w3.org/2000/svg","text");
+    text.setAttribute("x", bx); text.setAttribute("y", by+4);
+    text.setAttribute("text-anchor","middle");
+    text.setAttribute("fill","#fff");
+    text.setAttribute("font-size","12");
+    text.textContent = b.text;
+    g.appendChild(text);
+    svg.appendChild(g);
+  });
+  const centerG = document.createElementNS("http://www.w3.org/2000/svg","g");
+  const centerCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+  centerCircle.setAttribute("cx",cx); centerCircle.setAttribute("cy",cy); centerCircle.setAttribute("r",50);
+  centerCircle.setAttribute("fill","#1E4A78");
+  centerG.appendChild(centerCircle);
+  const centerTextEl = document.createElementNS("http://www.w3.org/2000/svg","text");
+  centerTextEl.setAttribute("x",cx); centerTextEl.setAttribute("y",cy+5);
+  centerTextEl.setAttribute("text-anchor","middle");
+  centerTextEl.setAttribute("fill","#fff");
+  centerTextEl.setAttribute("font-size","14");
+  centerTextEl.setAttribute("font-weight","700");
+  centerTextEl.textContent = centerText;
+  centerG.appendChild(centerTextEl);
+  svg.appendChild(centerG);
+}
+
+/* ---------------- EXTRA: venn diagram ---------------- */
+function setupVennColumn(inputId, addBtnId, listId, stateKey){
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(addBtnId);
+  function add(){
+    const text = input.value.trim();
+    if(text.length===0) return;
+    state.venn[stateKey].push({id:"v"+Date.now()+Math.random().toString(36).slice(2,5), text});
+    saveState();
+    input.value = "";
+    renderVenn();
+  }
+  btn.addEventListener("click", add);
+  input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") add(); });
+}
+setupVennColumn("venn-left-input","venn-left-add","venn-left-list","onlyLeft");
+setupVennColumn("venn-both-input","venn-both-add","venn-both-list","both");
+setupVennColumn("venn-right-input","venn-right-add","venn-right-list","onlyRight");
+document.getElementById("venn-left-theme").addEventListener("input",(e)=>{ state.venn.leftTheme=e.target.value; saveState(); renderVenn(); });
+document.getElementById("venn-right-theme").addEventListener("input",(e)=>{ state.venn.rightTheme=e.target.value; saveState(); renderVenn(); });
+
+function renderVennList(listId, stateKey){
+  const wrap = document.getElementById(listId);
+  wrap.innerHTML = "";
+  state.venn[stateKey].forEach(item=>{
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.textContent = item.text + " ×";
+    chip.addEventListener("click", ()=>{
+      state.venn[stateKey] = state.venn[stateKey].filter(x=>x.id!==item.id);
+      saveState();
+      renderVenn();
+    });
+    wrap.appendChild(chip);
+  });
+}
+function renderVenn(){
+  document.getElementById("venn-left-theme").value = state.venn.leftTheme;
+  document.getElementById("venn-right-theme").value = state.venn.rightTheme;
+  document.getElementById("venn-label-left").textContent = (state.venn.leftTheme || "左") + "だけ";
+  document.getElementById("venn-label-right").textContent = (state.venn.rightTheme || "右") + "だけ";
+  renderVennList("venn-left-list","onlyLeft");
+  renderVennList("venn-both-list","both");
+  renderVennList("venn-right-list","onlyRight");
+}
+
+/* ---------------- init ---------------- */
+renderTray();
+renderPlacedTokens();
+restoreReflection();
+redrawCharts();
+showStep(0);
+</script>
+</body>
+</html>
